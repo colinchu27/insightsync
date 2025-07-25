@@ -3,6 +3,7 @@ const router = express.Router();
 
 // GET /api/insights
 router.get('/', (req, res) => {
+    console.log('GET /api/insights hit');
     res.json([
         {
             id: 1,
@@ -10,15 +11,9 @@ router.get('/', (req, res) => {
             source: 'https://example.com/focus',
             takeaway: 'Eliminate distractions to produce high-leverage output.',
             tags: ['productivity', 'focus']
-        },
-        {
-            id: 2,
-            title: 'How PMs Think',
-            source: 'https://example.com/pm-thinking',
-            takeaway: 'Good PMs frame problems before rushing to solutions.',
-            tags: ['product-management']
         }
     ]);
 });
+
 
 module.exports = router;
