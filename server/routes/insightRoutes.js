@@ -25,4 +25,23 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    try {
+        const updatedInsight = await Insight.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedInsight) {
+            return res.status(404).json({ error: 'Insight not found' });
+        }
+
+        res.json(updatedInsight);
+    } catch (err) {
+        console.error('Error updating insight:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 module.exports = router;
