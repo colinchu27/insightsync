@@ -12,6 +12,9 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
+
   useEffect(() => {
     fetch('http://localhost:5050/api/insights')
       .then(res => res.json())
@@ -31,7 +34,6 @@ function App() {
     };
 
     if (isEditing && editId) {
-      // PUT request to update
       const res = await fetch(`http://localhost:5050/api/insights/${editId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +49,6 @@ function App() {
       setIsEditing(false);
       setEditId(null);
     } else {
-      // POST request to add
       const res = await fetch('http://localhost:5050/api/insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,7 +62,24 @@ function App() {
     setForm({ title: '', source: '', takeaway: '', tags: '' });
   };
 
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this insight?');
+    if (!confirmDelete) return;
 
+    await fetch(`http://localhost:5050/api/insights/${id}`, {
+      method: 'DELETE'
+    });
+
+    setInsights(insights.filter(insight => insight._id !== id));
+  };
+
+  // Apply filters
+  const filteredInsights = insights.filter(insight => {
+    const matchesSearch = insight.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      insight.takeaway.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTag = tagFilter === '' || insight.tags.some(tag => tag.toLowerCase().includes(tagFilter.toLowerCase()));
+    return matchesSearch && matchesTag;
+  });
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -77,16 +95,28 @@ function App() {
         </button>
       </form>
 
+      <div style={{ marginBottom: '1.5rem' }}>
+        <input
+          placeholder="Search insights..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ marginRight: '1rem' }}
+        />
+        <input
+          placeholder="Filter by tag..."
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+        />
+      </div>
 
       <div>
-        {insights.map(insight => (
+        {filteredInsights.map(insight => (
           <div key={insight._id} style={{ marginBottom: '1rem' }}>
             <h3>{insight.title}</h3>
             <p>{insight.takeaway}</p>
             <a href={insight.source} target="_blank" rel="noopener noreferrer">Read More</a>
             <p>Tags: {insight.tags.join(', ')}</p>
 
-            {/* 🔧 Edit Button */}
             <button onClick={() => {
               setForm({
                 title: insight.title,
@@ -98,6 +128,10 @@ function App() {
               setEditId(insight._id);
             }}>
               Edit
+            </button>
+
+            <button onClick={() => handleDelete(insight._id)} style={{ marginLeft: '1rem' }}>
+              Delete
             </button>
 
             <hr />
