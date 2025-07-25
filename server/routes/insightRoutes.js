@@ -2,15 +2,15 @@ const express = require('express');
 const router = express.Router();
 const Insight = require('../models/Insight'); // adjust path if needed
 
-// GET /api/insights
 router.get('/', async (req, res) => {
     try {
-        const insights = await Insight.find();
+        const insights = await Insight.find().sort({ createdAt: -1 });
         res.json(insights);
     } catch (err) {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 
 // POST /api/insights
 router.post('/', async (req, res) => {

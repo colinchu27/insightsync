@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-const InsightSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    source: { type: String, required: true },
-    takeaway: { type: String, required: true },
+const insightSchema = new mongoose.Schema({
+    title: String,
+    source: String,
+    takeaway: String,
     tags: [String]
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model('Insight', InsightSchema);
+module.exports = mongoose.model('Insight', insightSchema);

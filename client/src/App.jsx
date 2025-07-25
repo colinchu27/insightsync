@@ -15,11 +15,18 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tagFilter, setTagFilter] = useState('');
 
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+
   useEffect(() => {
     fetch('http://localhost:5050/api/insights')
       .then(res => res.json())
-      .then(data => setInsights(data));
+      .then(data => {
+        console.log("Fetched insights:", data);
+        setInsights(data);
+      });
   }, []);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -80,13 +87,22 @@ function App() {
     return matchesSearch && matchesTag;
   });
 
+  const sortedInsights = [...filteredInsights].sort((a, b) => {
+    let fieldA = sortField === 'title' ? a.title.toLowerCase() : new Date(a.createdAt);
+    let fieldB = sortField === 'title' ? b.title.toLowerCase() : new Date(b.createdAt);
+
+    if (fieldA < fieldB) return sortOrder === 'asc' ? -1 : 1;
+    if (fieldA > fieldB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   return (
     <div style={{ padding: '2rem' }}>
       <h1>InsightSync</h1>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
         <input name="title" placeholder="Title" value={form.title} onChange={handleChange} required /><br />
-        <input name="source" placeholder="Source URL" value={form.source} onChange={handleChange} required /><br />
+        <input name="source" placeholder="Source URL" value={form.source} onChange={handleChange} /><br />
         <textarea name="takeaway" placeholder="Takeaway" value={form.takeaway} onChange={handleChange} required /><br />
         <input name="tags" placeholder="Comma-separated tags" value={form.tags} onChange={handleChange} /><br />
         <button type="submit">
@@ -117,12 +133,33 @@ function App() {
         </button>
       </div>
 
+      <div style={{ marginBottom: '1.5rem' }}>
+        <label>Sort By: </label>
+        <select value={sortField} onChange={(e) => setSortField(e.target.value)} style={{ marginRight: '1rem' }}>
+          <option value="createdAt">Date</option>
+          <option value="title">Title</option>
+        </select>
+        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+          <option value="desc">Descending</option>
+          <option value="asc">Ascending</option>
+        </select>
+      </div>
+
       <div>
-        {filteredInsights.map(insight => (
+        {sortedInsights.map(insight => (
           <div key={insight._id} style={{ marginBottom: '1rem' }}>
             <h3>{insight.title}</h3>
             <p>{insight.takeaway}</p>
-            <a href={insight.source} target="_blank" rel="noopener noreferrer">Read More</a>
+
+            {insight.source && (
+              <p>
+                Source:{' '}
+                <a href={insight.source} target="_blank" rel="noopener noreferrer">
+                  {insight.source}
+                </a>
+              </p>
+            )}
+
             <p>
               Tags:{' '}
               {insight.tags.map((tag, idx) => (
