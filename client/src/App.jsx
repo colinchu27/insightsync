@@ -73,7 +73,6 @@ function App() {
     setInsights(insights.filter(insight => insight._id !== id));
   };
 
-  // Apply filters
   const filteredInsights = insights.filter(insight => {
     const matchesSearch = insight.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       insight.takeaway.toLowerCase().includes(searchTerm.toLowerCase());
@@ -107,6 +106,15 @@ function App() {
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
         />
+        <button
+          onClick={() => {
+            setSearchTerm('');
+            setTagFilter('');
+          }}
+          style={{ marginLeft: '1rem' }}
+        >
+          Clear Filters
+        </button>
       </div>
 
       <div>
@@ -115,7 +123,18 @@ function App() {
             <h3>{insight.title}</h3>
             <p>{insight.takeaway}</p>
             <a href={insight.source} target="_blank" rel="noopener noreferrer">Read More</a>
-            <p>Tags: {insight.tags.join(', ')}</p>
+            <p>
+              Tags:{' '}
+              {insight.tags.map((tag, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setTagFilter(tag)}
+                  style={{ marginRight: '0.5rem', cursor: 'pointer' }}
+                >
+                  {tag}
+                </button>
+              ))}
+            </p>
 
             <button onClick={() => {
               setForm({
