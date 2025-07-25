@@ -1,41 +1,28 @@
 const express = require('express');
 const router = express.Router();
-
-let insights = [
-    {
-        id: 1,
-        title: 'The Power of Focus',
-        source: 'https://example.com/focus',
-        takeaway: 'Eliminate distractions to produce high-leverage output.',
-        tags: ['productivity', 'focus']
-    }
-];
+const Insight = require('../models/Insight'); // adjust path if needed
 
 // GET /api/insights
-router.get('/', (req, res) => {
-    res.json(insights);
-});
-
-// POST /api/insights
-// POST /api/insights
-router.post('/', (req, res) => {
-    const { title, source, takeaway, tags } = req.body;
-
-    if (!title || !source || !takeaway) {
-        return res.status(400).json({ error: 'Missing required fields' });
+router.get('/', async (req, res) => {
+    try {
+        const insights = await Insight.find();
+        res.json(insights);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
     }
-
-    const newInsight = {
-        id: Date.now(), // quick unique ID
-        title,
-        source,
-        takeaway,
-        tags: tags || []
-    };
-
-    console.log('New insight submitted:', newInsight);
-    res.status(201).json(newInsight);
 });
 
+// POST /api/insights
+router.post('/', async (req, res) => {
+    try {
+        const { title, source, takeaway, tags } = req.body;
+        const newInsight = new Insight({ title, source, takeaway, tags });
+        const savedInsight = await newInsight.save();
+        res.json(savedInsight);
+    } catch (err) {
+        console.error('Error saving insight:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 module.exports = router;
