@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Insight = require('../models/Insight'); // adjust path if needed
 
+// GET all insights (sorted by most recent)
 router.get('/', async (req, res) => {
     try {
         const insights = await Insight.find().sort({ createdAt: -1 });
@@ -11,25 +12,34 @@ router.get('/', async (req, res) => {
     }
 });
 
-
-// POST /api/insights
+// POST a new insight
 router.post('/', async (req, res) => {
+    const { title, source, takeaway, tags, visibility } = req.body;
+
+    const newInsight = new Insight({
+        title,
+        source,
+        takeaway,
+        tags,
+        visibility,
+    });
+
     try {
-        const { title, source, takeaway, tags } = req.body;
-        const newInsight = new Insight({ title, source, takeaway, tags });
-        const savedInsight = await newInsight.save();
-        res.json(savedInsight);
+        const saved = await newInsight.save();
+        res.json(saved);
     } catch (err) {
-        console.error('Error saving insight:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Failed to save insight' });
     }
 });
 
+// PUT (update) an existing insight
 router.put('/:id', async (req, res) => {
+    const { title, source, takeaway, tags, visibility } = req.body;
+
     try {
         const updatedInsight = await Insight.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            { title, source, takeaway, tags, visibility },
             { new: true, runValidators: true }
         );
 
@@ -44,6 +54,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// DELETE an insight
 router.delete('/:id', async (req, res) => {
     try {
         const deleted = await Insight.findByIdAndDelete(req.params.id);

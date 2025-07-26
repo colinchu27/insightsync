@@ -3,7 +3,7 @@ import './App.css';
 
 function App() {
   const [insights, setInsights] = useState([]);
-  const [form, setForm] = useState({ title: '', source: '', takeaway: '', tags: '' });
+  const [form, setForm] = useState({ title: '', source: '', takeaway: '', tags: '', visibility: 'public' });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,7 +42,7 @@ function App() {
       const newInsight = await res.json();
       setInsights([...insights, newInsight]);
     }
-    setForm({ title: '', source: '', takeaway: '', tags: '' });
+    setForm({ title: '', source: '', takeaway: '', tags: '', visibility: 'public' });
   };
 
   const handleDelete = async (id) => {
@@ -127,6 +127,19 @@ function App() {
                   onChange={handleChange}
                   className="form-input"
                 />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Visibility</label>
+                <select
+                  name="visibility"
+                  value={form.visibility}
+                  onChange={handleChange}
+                  className="form-input"
+                >
+                  <option value="private">Private</option>
+                  <option value="public">Public</option>
+                </select>
               </div>
 
               <button onClick={handleSubmit} className="submit-button">
@@ -215,6 +228,13 @@ function App() {
                 <div key={insight._id} className="insight-card">
                   <div className="insight-content">
                     <h3 className="insight-title">{insight.title}</h3>
+                    <p className="text-sm italic mb-1" style={{ color: 'white' }}>
+                      {insight.visibility === 'public' ? '🌍 Public' : '🔒 Private'}
+                    </p>
+
+
+
+
                     <p className="insight-text">{insight.takeaway}</p>
 
                     {insight.source && (
