@@ -1,6 +1,6 @@
 # InsightSync 🧠
 
-**InsightSync** is a personal knowledge management tool I designed and built during my **Product Management internship** at Ipserlabs to improve team alignment, reduce knowledge silos, and streamline idea sharing across teams.
+**InsightSync** is a personal knowledge management tool I designed and built during my **Product Management internship** at **Ipserlabs** to improve team alignment, reduce knowledge silos, and streamline idea sharing across teams.
 
 While managing specs, user feedback, research docs, and team syncs, I noticed a pattern: insights were scattered, forgotten, or buried in chat threads and notebooks. InsightSync solves that. It’s a centralized, beautifully minimal space where insights from articles, research, customer calls, and internal docs can be saved, organized, and surfaced later by anyone on the team.
 
