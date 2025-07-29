@@ -1,39 +1,69 @@
 # InsightSync 🧠
 
-InsightSync is a personal knowledge manager built with the goal of helping users store, organize, and retrieve insights from articles, podcasts, books, or anywhere else they learn. Users can add, tag, edit, delete, search, and filter insights based on keywords and tags.
+**InsightSync** is a personal knowledge management tool I designed and built during my **Product Management internship** at Ipserlabs to improve team alignment, reduce knowledge silos, and streamline idea sharing across teams.
 
-> 🚧 **This project is currently in progress.** 
+While managing specs, user feedback, research docs, and team syncs, I noticed a pattern: insights were scattered, forgotten, or buried in chat threads and notebooks. InsightSync solves that. It’s a centralized, beautifully minimal space where insights from articles, research, customer calls, and internal docs can be saved, organized, and surfaced later by anyone on the team.
 
----
-
-## Features
-
-- 🔍 **Search & Filter**: Quickly find insights by keyword or tag  
-- 🏷️ **Clickable Tags**: Filter insights by clicking any tag  
-- ✍️ **Add / Edit / Delete**: Fully manage insight entries  
-- 📅 **Sort Options**: Sort by date or title, ascending or descending  
-- 🧼 **Clear Filters**: One click to reset your search and tag filters  
-- 🔗 **Smart Links**: Clean display of source URLs, or hidden if none provided  
+> 🚀 Originally built as an internal tool, now evolving into a fully fledged standalone product.
 
 ---
 
-## Tech Stack
+## ✨ Why I Built This
 
-- **Frontend**: React (Vite)
-- **Backend**: Node.js + Express
-- **Database**: MongoDB (Atlas)
-- **Styling**: Minimal inline CSS
+During my internship, I led multiple feature explorations and needed a way to:
+- Track product insights across sources (user interviews, industry research, etc.)
+- Share learnings with other team members without repeating myself
+- Let designers, engineers, and execs quickly find past decisions, links, and rationale
+
 
 ---
 
-## Getting Started
+## 🔥 Features
+
+- 🔍 **Search & Filter**  
+  Instantly filter insights by keywords or tags.
+
+- 🏷️ **Clickable Tags**  
+  Tap any tag to trigger automatic filtering.
+
+- ✍️ **Add / Edit / Delete Insights**  
+  Full control over every entry.
+
+- 📅 **Sort Options**  
+  Sort insights by date or title, ascending or descending.
+
+- 🧼 **Clear Filters**  
+  One click to reset all applied filters and searches.
+
+- 🔗 **Smart Source Links**  
+  Automatically formats and displays source URLs (hidden if not provided).
+
+- 🌍 **Public Collections**  
+  Create and browse community-curated or team-facing collections.
+
+- 🔐 **Private vs Public Toggle (Coming Soon)**  
+  Let users choose whether to keep collections private or share them across the org.
+
+---
+
+## 🧱 Tech Stack
+
+**Frontend:** React + Vite  
+**Backend:** Node.js + Express  
+**Database:** MongoDB Atlas  
+**Styling:** Tailwind style custom utility classes
+
+---
+
+
+## 🚀 Getting Started
 
 ### 1. Clone the Repo
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/insightsync.git
 cd insightsync
-```
+
 
 ### 2. Set Up Environment
 
