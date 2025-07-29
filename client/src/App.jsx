@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import { Link } from 'react-router-dom';
 
 function App() {
   const [insights, setInsights] = useState([]);
@@ -79,7 +80,15 @@ function App() {
           <p className="app-subtitle">
             Capture, organize, and discover your most valuable insights in one beautiful place
           </p>
+          <div className="view-collections-link">
+            <a href="/collections" className="public-link-button">
+              View Public Collections →
+            </a>
+          </div>
         </header>
+
+
+
 
         {/* Form */}
         <section className="form-section">

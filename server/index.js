@@ -6,6 +6,8 @@ require('dotenv').config();
 
 const insightRoutes = require('./routes/insightRoutes');
 
+const collectionRoutes = require('./routes/collectionRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5050;
 
@@ -13,6 +15,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/insights', insightRoutes);
+
+app.use('/api/collections', collectionRoutes);
 
 app.get('/', (req, res) => {
     res.send('InsightSync API is live');

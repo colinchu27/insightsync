@@ -1,4 +1,3 @@
-// models/Insight.js (or wherever your schema is)
 const mongoose = require('mongoose');
 
 const InsightSchema = new mongoose.Schema({

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const Insight = require('../models/Insight'); // adjust path if needed
+const Insight = require('../models/Insight');
 
-// GET all insights (sorted by most recent)
+
+// get all insights (sorted by most recent)
 router.get('/', async (req, res) => {
     try {
         const insights = await Insight.find().sort({ createdAt: -1 });
@@ -12,7 +13,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST a new insight
+// post a new insight
 router.post('/', async (req, res) => {
     const { title, source, takeaway, tags, visibility } = req.body;
 
