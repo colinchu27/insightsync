@@ -81,9 +81,9 @@ function App() {
             Capture, organize, and discover your most valuable insights in one beautiful place
           </p>
           <div className="view-collections-link">
-            <a href="/collections" className="public-link-button">
-              View Public Collections →
-            </a>
+            <Link to="/collections" className="public-link-button">
+              View Collections →
+            </Link>
           </div>
         </header>
 

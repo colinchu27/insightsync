@@ -1,96 +1,159 @@
-# InsightSync 🧠
+# InsightSync
 
-**InsightSync** is a personal knowledge management tool I designed and built during my **Product Management internship** at **Ipserlabs** to improve team alignment, reduce knowledge silos, and streamline idea sharing across teams.
+A beautiful web application for capturing, organizing, and sharing insights. Users can create individual insights and organize them into collections for better knowledge management.
 
-While managing specs, user feedback, research docs, and team syncs, I noticed a pattern: insights were scattered, forgotten, or buried in chat threads and notebooks. InsightSync solves that. It’s a centralized, beautifully minimal space where insights from articles, research, customer calls, and internal docs can be saved, organized, and surfaced later by anyone on the team.
+## Features
 
-> 🚀 Originally built as an internal tool, now evolving into a fully fledged standalone product.
+### Insights Management
+- ✅ Create, edit, and delete insights
+- ✅ Add titles, sources, takeaways, and tags
+- ✅ Set visibility (public/private)
+- ✅ Search and filter insights
+- ✅ Sort by date or title
 
----
+### Collections Management
+- ✅ Create new collections with custom names and descriptions
+- ✅ Edit existing collections
+- ✅ Delete collections
+- ✅ Set collection visibility (public/private)
+- ✅ Add insights to collections
+- ✅ Remove insights from collections
+- ✅ View collection statistics and previews
+- ✅ Browse all collections (public and private)
 
-## ✨ Why I Built This
+### User Interface
+- ✅ Modern, responsive design with glassmorphism effects
+- ✅ Intuitive navigation between insights and collections
+- ✅ Modal forms for creating and editing
+- ✅ Real-time updates and state management
+- ✅ Loading states and error handling
 
-During my internship, I led multiple feature explorations and needed a way to:
-- Track product insights across sources (user interviews, industry research, etc.)
-- Share learnings with other team members without repeating myself
-- Let designers, engineers, and execs quickly find past decisions, links, and rationale
+## Getting Started
 
+### Prerequisites
+- Node.js (v16 or higher)
+- MongoDB (local or cloud instance)
 
----
+### Installation
 
-## 🔥 Features
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd insightsync
+   ```
 
-- 🔍 **Search & Filter**  
-  Instantly filter insights by keywords or tags.
+2. **Install server dependencies**
+   ```bash
+   cd server
+   npm install
+   ```
 
-- 🏷️ **Clickable Tags**  
-  Tap any tag to trigger automatic filtering.
+3. **Install client dependencies**
+   ```bash
+   cd ../client
+   npm install
+   ```
 
-- ✍️ **Add / Edit / Delete Insights**  
-  Full control over every entry.
+4. **Set up environment variables**
+   Create a `.env` file in the server directory:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   PORT=5050
+   ```
 
-- 📅 **Sort Options**  
-  Sort insights by date or title, ascending or descending.
+5. **Start the server**
+   ```bash
+   cd ../server
+   npm start
+   ```
 
-- 🧼 **Clear Filters**  
-  One click to reset all applied filters and searches.
+6. **Start the client**
+   ```bash
+   cd ../client
+   npm run dev
+   ```
 
-- 🔗 **Smart Source Links**  
-  Automatically formats and displays source URLs (hidden if not provided).
+7. **Open your browser**
+   Navigate to `http://localhost:5173` to access the application.
 
-- 🌍 **Public Collections**  
-  Create and browse community-curated or team-facing collections.
+## Usage
 
-- 🔐 **Private vs Public Toggle (Coming Soon)**  
-  Let users choose whether to keep collections private or share them across the org.
+### Creating Insights
+1. Navigate to the home page
+2. Fill out the insight form with title, source, takeaway, and tags
+3. Choose visibility (public or private)
+4. Click "Add New Insight"
 
----
+### Managing Collections
+1. Click "View Collections" from the home page
+2. Click "Create New Collection" to add a new collection
+3. Fill in the collection name, description, and visibility
+4. Use the "Manage" button to add/remove insights from collections
+5. Use "Edit" to modify collection details
+6. Use "Delete" to remove collections
 
-## 🧱 Tech Stack
+### Adding Insights to Collections
+1. Go to the Collections page
+2. Click "Manage" on any collection
+3. Select an insight from the dropdown
+4. Click "Add to Collection"
+5. Use "Remove" to take insights out of collections
 
-**Frontend:** React + Vite  
-**Backend:** Node.js + Express  
-**Database:** MongoDB Atlas  
-**Styling:** Tailwind style custom utility classes
+## API Endpoints
 
----
+### Insights
+- `GET /api/insights` - Get all insights
+- `POST /api/insights` - Create new insight
+- `PUT /api/insights/:id` - Update insight
+- `DELETE /api/insights/:id` - Delete insight
 
+### Collections
+- `GET /api/collections` - Get all collections
+- `GET /api/collections/public` - Get public collections only
+- `POST /api/collections` - Create new collection
+- `PUT /api/collections/:id` - Update collection
+- `DELETE /api/collections/:id` - Delete collection
+- `POST /api/collections/:id/insights` - Add insight to collection
+- `DELETE /api/collections/:id/insights/:insightId` - Remove insight from collection
 
-## 🚀 Getting Started
+## Technology Stack
 
-### 1. Clone the Repo
+- **Frontend**: React 19, Vite, React Router DOM
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB with Mongoose
+- **Styling**: Custom CSS with glassmorphism design
 
-```bash
-git clone https://github.com/YOUR_USERNAME/insightsync.git
-cd insightsync
+## Project Structure
 
-
-### 2. Set Up Environment
-
-Create a `.env` file in the `/server` directory:
-
-```env
-MONGODB_URI=your-mongodb-uri-here
+```
+insightsync/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── App.jsx        # Main insights page
+│   │   ├── Collections.jsx # Collections management
+│   │   ├── CollectionForm.jsx # Collection creation/editing
+│   │   ├── InsightManager.jsx # Insight management within collections
+│   │   └── App.css        # Styles
+│   └── package.json
+├── server/                 # Node.js backend
+│   ├── models/
+│   │   ├── collection.js  # Collection model
+│   │   └── Insight.js     # Insight model
+│   ├── routes/
+│   │   ├── collectionRoutes.js # Collection API routes
+│   │   └── insightRoutes.js    # Insight API routes
+│   └── index.js           # Server entry point
+└── README.md
 ```
 
-Make sure your MongoDB user has read/write access to your cluster.
+## Contributing
 
-### 3. Run the App
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-In one terminal:
+## License
 
-```bash
-cd server
-npm install
-npm run dev
-```
-
-In another terminal:
-
-```bash
-cd client
-npm install
-npm run dev
-```
-
-The app should now be running at `http://localhost:5173`.
+This project is licensed under the ISC License.
