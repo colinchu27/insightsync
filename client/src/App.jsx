@@ -1,73 +1,225 @@
 import { useEffect, useState } from 'react';
-import './App.css';
 import { Link } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import { LoginForm, RegisterForm } from './components/AuthForms';
+import { UserProfile } from './components/UserProfile';
+import './App.css';
 
 function App() {
+  const { user, token, isAuthenticated } = useAuth();
   const [insights, setInsights] = useState([]);
-  const [form, setForm] = useState({ title: '', source: '', takeaway: '', tags: '', visibility: 'public' });
+  const [collections, setCollections] = useState([]);
+  const [form, setForm] = useState({ 
+    title: '', 
+    source: '', 
+    takeaway: '', 
+    tags: '', 
+    visibility: 'public',
+    collectionId: '' 
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:5050/api/insights')
-      .then(res => res.json())
-      .then(data => setInsights(data));
-  }, []);
+    fetchInsights();
+    if (isAuthenticated) {
+      fetchCollections();
+    }
+  }, [token, isAuthenticated]);
+
+  const fetchInsights = async () => {
+    try {
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('http://localhost:5050/api/insights', {
+        headers
+      });
+      const data = await response.json();
+      setInsights(data);
+    } catch (error) {
+      console.error('Error fetching insights:', error);
+    }
+  };
+
+  const fetchCollections = async () => {
+    try {
+      const response = await fetch('http://localhost:5050/api/collections/my', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setCollections(data);
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+    }
+  };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async () => {
     if (!form.title || !form.takeaway) return;
 
+    if (!isAuthenticated) {
+      setAuthMode('login');
+      setShowAuth(true);
+      return;
+    }
+
     const payload = { ...form, tags: form.tags.split(',').map(tag => tag.trim()) };
 
-    if (isEditing && editId) {
-      const res = await fetch(`http://localhost:5050/api/insights/${editId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const updatedInsight = await res.json();
-      setInsights(insights.map(insight => insight._id === editId ? updatedInsight : insight));
-      setIsEditing(false); setEditId(null);
-    } else {
-      const res = await fetch('http://localhost:5050/api/insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const newInsight = await res.json();
-      setInsights([...insights, newInsight]);
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      if (isEditing && editId) {
+        const res = await fetch(`http://localhost:5050/api/insights/${editId}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const updatedInsight = await res.json();
+        setInsights(insights.map(insight => insight._id === editId ? updatedInsight : insight));
+        setIsEditing(false);
+        setEditId(null);
+      } else {
+        const res = await fetch('http://localhost:5050/api/insights', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const newInsight = await res.json();
+        setInsights([newInsight, ...insights]);
+        
+        // If a collection was selected, add the insight to it
+        if (form.collectionId) {
+          await addInsightToCollection(newInsight._id, form.collectionId);
+        }
+      }
+      setForm({ title: '', source: '', takeaway: '', tags: '', visibility: 'public', collectionId: '' });
+    } catch (error) {
+      console.error('Error saving insight:', error);
     }
-    setForm({ title: '', source: '', takeaway: '', tags: '', visibility: 'public' });
+  };
+
+  const addInsightToCollection = async (insightId, collectionId) => {
+    try {
+      const response = await fetch(`http://localhost:5050/api/collections/${collectionId}/insights`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ insightId })
+      });
+      
+      if (response.ok) {
+        console.log('Insight added to collection successfully');
+      }
+    } catch (error) {
+      console.error('Error adding insight to collection:', error);
+    }
+  };
+
+  const handleAddToCollection = async (insightId) => {
+    if (!isAuthenticated) {
+      setAuthMode('login');
+      setShowAuth(true);
+      return;
+    }
+
+    const collectionId = prompt('Enter collection ID to add this insight to:');
+    if (collectionId) {
+      await addInsightToCollection(insightId, collectionId);
+    }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this insight?')) return;
-    await fetch(`http://localhost:5050/api/insights/${id}`, { method: 'DELETE' });
-    setInsights(insights.filter(insight => insight._id !== id));
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/insights/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setInsights(insights.filter(insight => insight._id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting insight:', error);
+    }
   };
 
+  const handleEdit = (insight) => {
+    if (!isAuthenticated || insight.user._id !== user._id) {
+      alert('You can only edit your own insights');
+      return;
+    }
+    setForm({
+      title: insight.title,
+      source: insight.source,
+      takeaway: insight.takeaway,
+      tags: insight.tags.join(', '),
+      visibility: insight.visibility,
+      collectionId: ''
+    });
+    setIsEditing(true);
+    setEditId(insight._id);
+  };
+
+  const handleAuthClose = () => {
+    setShowAuth(false);
+    setAuthMode('login');
+  };
+
+  const switchToRegister = () => setAuthMode('register');
+  const switchToLogin = () => setAuthMode('login');
+
   const filteredInsights = insights.filter(insight => {
-    const matchesSearch = insight.title.toLowerCase().includes(searchTerm.toLowerCase()) || insight.takeaway.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTag = tagFilter === '' || insight.tags.some(tag => tag.toLowerCase().includes(tagFilter.toLowerCase()));
+    const matchesSearch = insight.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         insight.takeaway.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         insight.source.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTag = !tagFilter || insight.tags.some(tag => 
+      tag.toLowerCase().includes(tagFilter.toLowerCase())
+    );
     return matchesSearch && matchesTag;
   });
 
   const sortedInsights = [...filteredInsights].sort((a, b) => {
-    let fieldA = sortField === 'title' ? a.title.toLowerCase() : new Date(a.createdAt);
-    let fieldB = sortField === 'title' ? b.title.toLowerCase() : new Date(b.createdAt);
-    return sortOrder === 'asc' ? fieldA > fieldB ? 1 : -1 : fieldA < fieldB ? 1 : -1;
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+    
+    if (sortField === 'createdAt' || sortField === 'updatedAt') {
+      return sortOrder === 'desc' ? new Date(bValue) - new Date(aValue) : new Date(aValue) - new Date(bValue);
+    }
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortOrder === 'desc' ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+    }
+    
+    return sortOrder === 'desc' ? bValue - aValue : aValue - bValue;
   });
+
+  const allTags = [...new Set(insights.flatMap(insight => insight.tags))];
 
   return (
     <div className="app-container">
       <div className="background-pattern"></div>
-
       <div className="content">
         {/* Header */}
         <header className="app-header">
@@ -80,15 +232,50 @@ function App() {
           <p className="app-subtitle">
             Capture, organize, and discover your most valuable insights in one beautiful place
           </p>
-          <div className="view-collections-link">
-            <Link to="/collections" className="public-link-button">
-              View Collections →
-            </Link>
+          
+          <div className="header-actions">
+            {isAuthenticated ? (
+              <div className="user-actions">
+                <div className="user-info">
+                  <span className="user-name">Welcome, {user?.displayName}</span>
+                  <button 
+                    onClick={() => setShowProfile(true)}
+                    className="profile-button"
+                  >
+                    👤 Profile
+                  </button>
+                </div>
+                <Link to="/collections" className="public-link-button">
+                  View Collections →
+                </Link>
+              </div>
+            ) : (
+              <div className="auth-actions">
+                <button 
+                  onClick={() => {
+                    setAuthMode('login');
+                    setShowAuth(true);
+                  }}
+                  className="auth-button login"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => {
+                    setAuthMode('register');
+                    setShowAuth(true);
+                  }}
+                  className="auth-button register"
+                >
+                  Sign Up
+                </button>
+                <Link to="/collections" className="public-link-button">
+                  Browse Collections →
+                </Link>
+              </div>
+            )}
           </div>
         </header>
-
-
-
 
         {/* Form */}
         <section className="form-section">
@@ -102,6 +289,7 @@ function App() {
                   value={form.title}
                   onChange={handleChange}
                   className="form-input"
+                  required
                 />
               </div>
 
@@ -124,6 +312,7 @@ function App() {
                   value={form.takeaway}
                   onChange={handleChange}
                   className="form-textarea"
+                  required
                 />
               </div>
 
@@ -151,9 +340,39 @@ function App() {
                 </select>
               </div>
 
-              <button onClick={handleSubmit} className="submit-button">
-                {isEditing ? '✨ Update Insight' : '+ Add New Insight'}
-              </button>
+              {isAuthenticated && collections.length > 0 && (
+                <div className="input-group">
+                  <label className="input-label">Add to Collection (Optional)</label>
+                  <select
+                    name="collectionId"
+                    value={form.collectionId}
+                    onChange={handleChange}
+                    className="form-input"
+                  >
+                    <option value="">Select a collection...</option>
+                    {collections.map(collection => (
+                      <option key={collection._id} value={collection._id}>
+                        {collection.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button onClick={handleSubmit} className="submit-button">
+                  {isEditing ? '✨ Update Insight' : '+ Add New Insight'}
+                </button>
+                {isEditing && (
+                  <button onClick={() => {
+                    setIsEditing(false);
+                    setEditId(null);
+                    setForm({ title: '', source: '', takeaway: '', tags: '', visibility: 'public', collectionId: '' });
+                  }} className="cancel-button">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -236,13 +455,19 @@ function App() {
               {sortedInsights.map((insight) => (
                 <div key={insight._id} className="insight-card">
                   <div className="insight-content">
-                    <h3 className="insight-title">{insight.title}</h3>
-                    <p className="text-sm italic mb-1" style={{ color: 'white' }}>
-                      {insight.visibility === 'public' ? '🌍 Public' : '🔒 Private'}
-                    </p>
-
-
-
+                    <div className="insight-header">
+                      <h3 className="insight-title">{insight.title}</h3>
+                      <div className="insight-meta">
+                        <span className={`visibility-badge ${insight.visibility}`}>
+                          {insight.visibility === 'public' ? '🌍 Public' : '🔒 Private'}
+                        </span>
+                        {insight.user && (
+                          <span className="author-badge">
+                            by {insight.user.displayName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
                     <p className="insight-text">{insight.takeaway}</p>
 
@@ -274,30 +499,34 @@ function App() {
                       </div>
                     )}
 
-                    <div className="insight-actions">
-                      <button
-                        onClick={() => {
-                          setForm({
-                            title: insight.title,
-                            source: insight.source || '',
-                            takeaway: insight.takeaway,
-                            tags: insight.tags ? insight.tags.join(', ') : ''
-                          });
-                          setIsEditing(true);
-                          setEditId(insight._id);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="edit-button"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(insight._id)}
-                        className="delete-button"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    {isAuthenticated && (
+                      <div className="insight-collection-actions">
+                        <button
+                          onClick={() => handleAddToCollection(insight._id)}
+                          className="add-to-collection-button"
+                          title="Add this insight to a collection"
+                        >
+                          📚 Add to Collection
+                        </button>
+                      </div>
+                    )}
+
+                    {isAuthenticated && insight.user?._id === user?._id && (
+                      <div className="insight-actions">
+                        <button
+                          onClick={() => handleEdit(insight)}
+                          className="edit-button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(insight._id)}
+                          className="delete-button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -305,6 +534,26 @@ function App() {
           )}
         </section>
       </div>
+
+      {/* Authentication Modals */}
+      {showAuth && (
+        authMode === 'login' ? (
+          <LoginForm 
+            onSwitchToRegister={switchToRegister}
+            onClose={handleAuthClose}
+          />
+        ) : (
+          <RegisterForm 
+            onSwitchToLogin={switchToLogin}
+            onClose={handleAuthClose}
+          />
+        )
+      )}
+
+      {/* Profile Modal */}
+      {showProfile && (
+        <UserProfile onClose={() => setShowProfile(false)} />
+      )}
     </div>
   );
 }

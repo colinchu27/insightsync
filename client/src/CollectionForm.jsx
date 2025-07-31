@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from './contexts/AuthContext';
 import './App.css';
 
 function CollectionForm({ collection, onSave, onCancel }) {
+    const { token } = useAuth();
     const [form, setForm] = useState({
         name: '',
         description: '',
@@ -33,9 +35,17 @@ function CollectionForm({ collection, onSave, onCancel }) {
             
             const method = collection ? 'PUT' : 'POST';
             
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(form)
             });
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from './contexts/AuthContext';
 import './App.css';
 
 function InsightManager({ collection, onUpdate }) {
+    const { token } = useAuth();
     const [availableInsights, setAvailableInsights] = useState([]);
     const [selectedInsight, setSelectedInsight] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -12,7 +14,14 @@ function InsightManager({ collection, onUpdate }) {
 
     const fetchAvailableInsights = async () => {
         try {
-            const response = await fetch('http://localhost:5050/api/insights');
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const response = await fetch('http://localhost:5050/api/insights', {
+                headers
+            });
             const insights = await response.json();
             setAvailableInsights(insights);
         } catch (error) {
@@ -25,9 +34,17 @@ function InsightManager({ collection, onUpdate }) {
 
         setIsLoading(true);
         try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(`http://localhost:5050/api/collections/${collection._id}/insights`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ insightId: selectedInsight })
             });
 
@@ -48,8 +65,14 @@ function InsightManager({ collection, onUpdate }) {
 
         setIsLoading(true);
         try {
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(`http://localhost:5050/api/collections/${collection._id}/insights/${insightId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers
             });
 
             if (response.ok) {

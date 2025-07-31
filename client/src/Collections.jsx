@@ -1,23 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import CollectionForm from './CollectionForm';
 import InsightManager from './InsightManager';
 import './App.css';
 
 function Collections() {
+    const { user, token, isAuthenticated } = useAuth();
     const [collections, setCollections] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editingCollection, setEditingCollection] = useState(null);
     const [managingCollection, setManagingCollection] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [viewMode, setViewMode] = useState('all'); // 'all', 'my', 'public'
 
     useEffect(() => {
         fetchCollections();
-    }, []);
+    }, [token, viewMode]);
 
     const fetchCollections = async () => {
         try {
-            const response = await fetch('http://localhost:5050/api/collections');
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            let endpoint = '/api/collections';
+            if (viewMode === 'my' && isAuthenticated) {
+                endpoint = '/api/collections/my';
+            } else if (viewMode === 'public') {
+                endpoint = '/api/collections/public';
+            }
+
+            const response = await fetch(`http://localhost:5050${endpoint}`, {
+                headers
+            });
             const data = await response.json();
             setCollections(data);
         } catch (err) {
@@ -28,11 +45,19 @@ function Collections() {
     };
 
     const handleCreateCollection = () => {
+        if (!isAuthenticated) {
+            alert('Please sign in to create collections');
+            return;
+        }
         setEditingCollection(null);
         setShowForm(true);
     };
 
     const handleEditCollection = (collection) => {
+        if (!isAuthenticated || collection.user._id !== user._id) {
+            alert('You can only edit your own collections');
+            return;
+        }
         setEditingCollection(collection);
         setShowForm(true);
     };
@@ -44,7 +69,10 @@ function Collections() {
 
         try {
             const response = await fetch(`http://localhost:5050/api/collections/${collectionId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (response.ok) {
@@ -61,7 +89,7 @@ function Collections() {
                 c._id === savedCollection._id ? savedCollection : c
             ));
         } else {
-            setCollections([...collections, savedCollection]);
+            setCollections([savedCollection, ...collections]);
         }
         setShowForm(false);
         setEditingCollection(null);
@@ -73,6 +101,10 @@ function Collections() {
     };
 
     const handleManageInsights = (collection) => {
+        if (!isAuthenticated || collection.user._id !== user._id) {
+            alert('You can only manage insights in your own collections');
+            return;
+        }
         setManagingCollection(collection);
     };
 
@@ -85,6 +117,10 @@ function Collections() {
 
     const handleCloseInsightManager = () => {
         setManagingCollection(null);
+    };
+
+    const canEditCollection = (collection) => {
+        return isAuthenticated && collection.user._id === user._id;
     };
 
     if (isLoading) {
@@ -109,12 +145,39 @@ function Collections() {
                         </svg>
                     </div>
                     <h1 className="app-title">Collections</h1>
-                    <p className="app-subtitle">Organize and share your insights with curated collections</p>
+                    <p className="app-subtitle">Discover and organize insights with curated collections</p>
+                    
                     <div className="header-actions">
-                        <button onClick={handleCreateCollection} className="create-button">
-                            + Create New Collection
-                        </button>
-                        <Link to="/" className="home-link">
+                        <div className="view-controls">
+                            <button 
+                                onClick={() => setViewMode('all')}
+                                className={`view-button ${viewMode === 'all' ? 'active' : ''}`}
+                            >
+                                All Collections
+                            </button>
+                            {isAuthenticated && (
+                                <button 
+                                    onClick={() => setViewMode('my')}
+                                    className={`view-button ${viewMode === 'my' ? 'active' : ''}`}
+                                >
+                                    My Collections
+                                </button>
+                            )}
+                            <button 
+                                onClick={() => setViewMode('public')}
+                                className={`view-button ${viewMode === 'public' ? 'active' : ''}`}
+                            >
+                                Public Only
+                            </button>
+                        </div>
+                        
+                        {isAuthenticated && (
+                            <button onClick={handleCreateCollection} className="create-collection-button">
+                                + Create New Collection
+                            </button>
+                        )}
+                        
+                        <Link to="/" className="back-to-insights-button">
                             ← Back to Insights
                         </Link>
                     </div>
@@ -128,11 +191,20 @@ function Collections() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                 </svg>
                             </div>
-                            <h3 className="empty-title">No collections yet</h3>
-                            <p className="empty-text">Create your first collection to start organizing insights</p>
-                            <button onClick={handleCreateCollection} className="create-button">
-                                Create Your First Collection
-                            </button>
+                            <h3 className="empty-title">
+                                {viewMode === 'my' ? 'No collections yet' : 'No collections found'}
+                            </h3>
+                            <p className="empty-text">
+                                {viewMode === 'my' 
+                                    ? 'Create your first collection to start organizing insights'
+                                    : 'Check back later for shared collections'
+                                }
+                            </p>
+                            {viewMode === 'my' && isAuthenticated && (
+                                <button onClick={handleCreateCollection} className="create-collection-button">
+                                    Create Your First Collection
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="collections-grid">
@@ -141,32 +213,14 @@ function Collections() {
                                     <div className="collection-header">
                                         <div className="collection-info">
                                             <h3 className="collection-title">{collection.name}</h3>
-                                            <span className={`visibility-badge ${collection.visibility}`}>
-                                                {collection.visibility === 'public' ? '🌍 Public' : '🔒 Private'}
-                                            </span>
-                                        </div>
-                                        <div className="collection-actions">
-                                            <button
-                                                onClick={() => handleManageInsights(collection)}
-                                                className="manage-button"
-                                                title="Manage insights"
-                                            >
-                                                📚 Manage
-                                            </button>
-                                            <button
-                                                onClick={() => handleEditCollection(collection)}
-                                                className="edit-button"
-                                                title="Edit collection"
-                                            >
-                                                ✏️ Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteCollection(collection._id)}
-                                                className="delete-button"
-                                                title="Delete collection"
-                                            >
-                                                🗑️ Delete
-                                            </button>
+                                            <div className="collection-meta">
+                                                <span className={`visibility-badge ${collection.visibility}`}>
+                                                    {collection.visibility === 'public' ? '🌍 Public' : '🔒 Private'}
+                                                </span>
+                                                <span className="author-badge">
+                                                    by {collection.user.displayName}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -185,7 +239,7 @@ function Collections() {
 
                                     {collection.insights && collection.insights.length > 0 && (
                                         <div className="collection-insights-preview">
-                                            <h4>Insights in this collection:</h4>
+                                            <h4>Recent Insights:</h4>
                                             <div className="insights-preview-grid">
                                                 {collection.insights.slice(0, 3).map((insight) => (
                                                     <div key={insight._id} className="insight-preview">
@@ -201,6 +255,34 @@ function Collections() {
                                             </div>
                                         </div>
                                     )}
+
+                                    {canEditCollection(collection) && (
+                                        <div className="collection-actions">
+                                            <button
+                                                onClick={() => handleManageInsights(collection)}
+                                                className="action-button primary"
+                                                title="Add or remove insights from this collection"
+                                            >
+                                                📚 Add/Remove Insights
+                                            </button>
+                                            <div className="secondary-actions">
+                                                <button
+                                                    onClick={() => handleEditCollection(collection)}
+                                                    className="action-button secondary"
+                                                    title="Edit collection details"
+                                                >
+                                                    ✏️ Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteCollection(collection._id)}
+                                                    className="action-button danger"
+                                                    title="Delete this collection"
+                                                >
+                                                    🗑️ Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -210,29 +292,31 @@ function Collections() {
 
             {/* Collection Form Modal */}
             {showForm && (
-                <CollectionForm
-                    collection={editingCollection}
-                    onSave={handleSaveCollection}
-                    onCancel={handleCancelForm}
-                />
+                <div className="form-overlay">
+                    <div className="form-modal">
+                        <CollectionForm
+                            collection={editingCollection}
+                            onSave={handleSaveCollection}
+                            onCancel={handleCancelForm}
+                        />
+                    </div>
+                </div>
             )}
 
             {/* Insight Manager Modal */}
             {managingCollection && (
                 <div className="form-overlay">
                     <div className="form-modal large">
-                        <div className="form-card">
-                            <div className="modal-header">
-                                <h2>Manage Insights: {managingCollection.name}</h2>
-                                <button onClick={handleCloseInsightManager} className="close-button">
-                                    ✕
-                                </button>
-                            </div>
-                            <InsightManager
-                                collection={managingCollection}
-                                onUpdate={handleUpdateCollection}
-                            />
+                        <div className="modal-header">
+                            <h2>Manage Insights: {managingCollection.name}</h2>
+                            <button onClick={handleCloseInsightManager} className="close-button">
+                                ✕
+                            </button>
                         </div>
+                        <InsightManager
+                            collection={managingCollection}
+                            onUpdate={handleUpdateCollection}
+                        />
                     </div>
                 </div>
             )}
